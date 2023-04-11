@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="./favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+  <title>查询 ChatGPTAPI 余额</title>
+  <style>
+    :root {
+      --color-primary: #5c7cfa;
+      --color-primary-dark: #4263eb;
+      --color-primary-alpha: #5c7cfa50;
+
+      --body-color: #495057;
+      --body-bg: #f8f9fa;
+
+      --border-color: #dee2e6;
+    }
+
+    body {
+      max-width: 40rem;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      color: var(--body-color);
+      background: var(--body-bg);
+      font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      text-rendering: optimizelegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: color .3s;
+    }
+
+    a:hover {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+    }
+
+    main[x-cloak] {
+      opacity: 0;
+    }
+
+    main:not([x-cloak]) {
+      opacity: 1;
+      transition: opacity .3s;
+    }
+
+    textarea {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      width: 100%;
+      padding: .5rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: .25rem;
+      box-sizing: border-box;
+      color: #33404d;
+      line-height: inherit;
+      font-size: 1rem;
+      transition: border .3s, box-shadow .3s;
+    }
+
+    textarea:focus {
+      box-shadow: 0 0 0 .25rem var(--color-primary-alpha);
+      border-color: var(--color-primary);
+      outline: 0;
+    }
+
+    input {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      width: 100%;
+      padding: .5rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: .25rem;
+      box-sizing: border-box;
+      color: #33404d;
+      line-height: inherit;
+      font-size: 1rem;
+      transition: border .3s, box-shadow .3s;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 .25rem var(--color-primary-alpha);
+      border-color: var(--color-primary);
+      outline: 0;
+    }
+
+    details {
+      margin: 1rem 0 2rem;
+      border: 1px solid var(--border-color);
+      border-radius: .25rem;
+      transition: background .3s;
+    }
+
+    details[open] {
+      background: #fff;
+    }
+
+    details summary {
+      padding: .5rem 1rem;
+      font-weight: 500;
+      user-select: none;
+      cursor: pointer;
+      opacity: .8;
+      outline: 0;
+    }
+
+    details div {
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    details small {
+      margin: 0;
+      font-size: .875rem;
+      line-height: 2;
+    }
+
+    button {
+      appearance: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: .5rem .75rem;
+      border: 1px solid var(--color-primary);
+      border-radius: .25rem;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: inherit;
+      cursor: pointer;
+      user-select: none;
+      transition: border .3s, background .3s, ;
+    }
+
+    button:hover {
+      border-color: var(--color-primary-dark);
+      background: var(--color-primary-dark);
+    }
+
+    button:focus {
+      box-shadow: 0 0 0 .25rem var(--color-primary-alpha);
+      border-color: var(--color-primary);
+      outline: 0;
+    }
+
+    button:disabled {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    button.loading::before {
+      content: '';
+      display: inline-block;
+      margin-right: .5rem;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      width: .75rem;
+      height: .75rem;
+      animation: rotate .5s linear infinite;
+    }
+
+    footer {
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      opacity: .5;
+    }
+
+    footer i {
+      font-style: normal;
+      color: #ff8787;
+    }
+
+    .success,
+    .error {
+      margin-bottom: 1rem;
+      padding: .5rem 1rem;
+      border-radius: .25rem;
+      color: #fff;
+      text-align: center;
+      opacity: 1;
+      transition: opacity .3s;
+    }
+
+    .success {
+      border: 1px solid #12b886;
+      background: #38d9a9;
+    }
+
+    .error {
+      border: 1px solid #fa5252;
+      background: #ff8787;
+    }
+
+    @keyframes rotate {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* 设置API URL选择器和自定义URL输入框的样式 */
+    select#api-url-select,
+    input#custom-url-input {
+      width: 100%;
+      height: 2.4rem;
+      font-size: 1rem;
+      background-color: #212121;
+      margin-bottom: .5rem;
+      padding: .5rem .75rem;
+      color: #ffffff;
+      border: none;
+      padding: .5rem .75rem;
+      border-radius: .25rem;
+      margin-right: 10px;
+      margin-top: 2vhpx;
+      /* 添加了顶部边距 */
+    }
+
+
+
+    /* 隐藏自定义API链接输入框 */
+    input#custom-url-input {
+      display: none;
+      height: 50px;
+      /* 添加高度 */
+    }
+
+
+
+    /* 下面的代码定义了结果表格的样式 */
+    #result-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      overflow: hidden;
+    }
+
+    /* 下面的代码定义了结果表格表头的样式 */
+    #result-table th {
+      background-color: var(--color-primary);
+      color: #fff;
+      font-weight: 400;
+      height: 20px;
+      padding: 10px 25px;
+      text-align: left;
+      border: 1px solid #dcdcdc;
+    }
+
+    /* 下面的代码定义了结果表格数据单元格的样式 */
+    #result-table td {
+      height: 20px;
+      text-align: left;
+      padding: 10px 25px;
+      border: 1px solid #d3d3d3;
+    }
+
+    /* 下面的代码定义了结果表格奇数行的背景颜色 */
+    #result-table tbody tr:nth-child(odd) {
+      background-color: #fefefe;
+    }
+
+    /* 下面的代码定义了结果表格偶数行的背景颜色 */
+    #result-table tbody tr:nth-child(even) {
+      background-color: #d7f5fd;
+    }
+
+    /* 下面的代码定义了结果表格表头的宽度 */
+    #result-table .table-header {
+      width: 25%;
+    }
+
+    /* 下面的代码定义了结果表格数据单元格的宽度、字体加粗和颜色 */
+    #result-table .table-data {
+      width: 25%;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* 下面的代码定义了结果表格数据单元格的样式 */
+    #result-table .status-error {
+      height: 20px;
+      text-align: center;
+      padding: 10px 25px;
+      border: 1px solid #dcdcdc;
+    }
+
+    /* 下面的代码定义了一个类名为status-ok的样式，用于设置成功状态的文本颜色 */
+    .status-ok {
+      color: #2d8d2d;
+    }
+
+    /* 下面的代码定义了一个类名为status-error的样式，用于设置错误状态的文本颜色 */
+    .status-error {
+      color: #ed0808;
+    }
+    #api-key-input {
+  width: 100%;
+  height: 100px;
+  border: 1px solid #999;
+  background-color: #fff;
+}
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 class="text-3xl font-semibold text-center mb-8 text-gradient">查询 OpenAI API 余额</h1>
+  </header>
+
+
+  <h2>输入 API KEY</h2>
+  <p>本站不会保存任何 KEY 信息，请在查询后自行保存</p>
+  <textarea id="api-key-input" placeholder="请输入 API-KEY，必须包含 sk-,多个可直接粘贴"></textarea></p>
+  <!-- API链接选择框 -->
+  <div class="api-url-container"></div>
+  <!-- API链接选择 -->
+  <h2>选择查询线路</h2>
+  <p>支持自定义线路，官网线路需要魔法</p>
+  <select id="api-url-select">
+    <option value="https://vercel.askopenai.tech">【默认线路】vercel.askopenai.tech</option>
+    <option value="https://api.askgptai.tech/">【CloudFlare】api.askgptai.tech/</option>
+    <option value="https://openai.1rmb.tk">【社区反代】openai.1rmb.tk</option>
+    <option value="https://api.openai.com">【官网线路】api.openai.com</option>
+    <option value="custom">自定义 ...</option>
+  </select>
+
+  <!-- 自定义API链接输入框 -->
+  <input type="text" id="custom-url-input" placeholder="输入自定义API，默认使用 https 协议" />
+  </div>
+  <button :class="{ loading }" :disabled="loading" onclick="sendRequest()">查询</button> </p>
+  <h2 id="result-head" style="visibility:hidden">查询结果</h2>
+        <table id="result-table" style="visibility:hidden">
+    <thead>
+      <tr>
+        <th>API KEY</th>
+        <th style="width: 50px">总额度</th>
+        <th style="width: 50px">已使用</th>
+        <th style="width: 50px">剩余量</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    </table>
+    <footer>
+      <a href="https://github.com/ClarenceDan/openai-billing">前往 Github 查看源码或独立部署</a>
+      <p x-data="ip" x-init='$nextTick(() => {getipinfo()})' x-show.transition.opacity="ipinfo" x-text="ipinfo"></p>
+    </footer>
+    <script>
+
+      // 定义查询过的API-KEY列表
+      let queriedApiKeys = [];
+
+      async function checkBilling(apiKey,apiUrl) {
+        // 计算起始日期和结束日期
+        const now = new Date();
+        let startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+        const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        const subDate = new Date(now);
+        subDate.setDate(1)
+
+        // 设置API请求URL和请求头
+        const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`; // 查是否订阅
+        const urlBalance = `${apiUrl}/dashboard/billing/credit_grants`; // 查普通账单
+        let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`; // 查使用量
+        const headers = {
+          "Authorization": "Bearer " + apiKey,
+          "Content-Type": "application/json"
+        };
+
+        try {
+          // 获取API限额
+          let response = await fetch(urlSubscription, { headers });
+          if (!response.ok) {
+            console.log("您的账户已被封禁，请登录OpenAI进行查看。");
+            return;
+          }
+          const subscriptionData = await response.json();
+          const totalAmount = subscriptionData.hard_limit_usd;
+
+
+          // 判断总用量是否大于20，若大于则更新startDate为subDate
+          if (totalAmount > 20) {
+            startDate = subDate;
+          }
+
+          // 重新生成urlUsage
+          urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+          
+          // 获取已使用量
+          response = await fetch(urlUsage, { headers });
+          const usageData = await response.json();
+          const totalUsage = usageData.total_usage / 100;
+          // 计算剩余额度
+          const remaining = totalAmount - totalUsage;
+
+          // 输出总用量、总额及余额信息
+          console.log(`Total Amount: ${totalAmount.toFixed(2)}`);
+          console.log(`Used: ${totalUsage.toFixed(2)}`);
+          console.log(`Remaining: ${remaining.toFixed(2)}`);
+
+          return [totalAmount, totalUsage, remaining];
+        } catch (error) {
+          console.error(error);
+          return [null, null, null];
+        }
+      }
+
+      function formatDate(date) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+      }
+
+      function sendRequest() {
+        // 清空之前的结果信息
+        let apiKeyInput = document.getElementById("api-key-input");
+        let apiUrlSelect = document.getElementById("api-url-select");
+        let customUrlInput = document.getElementById("custom-url-input");
+        let table = document.getElementById("result-table");
+        let h2 = document.getElementById("result-head");
+        h2.style.visibility = "visible";
+        table.style.visibility = "visible";
+
+
+        if (apiKeyInput.value.trim() === "") {
+          alert("请填写API KEY");
+          return;
+        }
+
+        // 添加以下一行代码，清空之前的结果信息
+        document.getElementById("result-table").getElementsByTagName('tbody')[0].innerHTML = "";
+
+
+        let apiUrl = "";
+        if (apiUrlSelect.value === "custom") {
+          if (customUrlInput.value.trim() === "") {
+            alert("请设置API链接");
+            return;
+          } else {
+            apiUrl = customUrlInput.value.trim();
+            if (!apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+              apiUrl = "https://" + apiUrl;
+            }
+          }
+        } else {
+          apiUrl = apiUrlSelect.value;
+        }
+
+
+        let apiKeys = apiKeyInput.value.split(/[,\s，\n]+/).filter(key => key.startsWith("sk-"));
+
+        alert("成功匹配到 API Key，确认后开始查询，匹配到的 API Key 为：" + apiKeys);
+
+        if (apiKeys === null) {
+          alert("未匹配到正确的 API-KEY，请检查输入内容");
+        return;
+        }
+        let tableBody = document.querySelector("#result-table tbody");
+        for (let i = 0; i < apiKeys.length; i++) {
+          let apiKey = apiKeys[i].trim();
+          // 判断是否已经查询过
+          if (queriedApiKeys.includes(apiKey)) {
+            console.log(`API KEY ${apiKey} 已查询过，跳过此次查询`);
+            continue;
+          }
+          queriedApiKeys.push(apiKey);
+
+          checkBilling(apiKey, apiUrl).then((data) => {
+            // update table with data
+            let row = document.createElement("tr");
+
+            // API KEY
+            let apiKeyCell = document.createElement("td");
+            apiKeyCell.textContent = apiKey.replace(/^(sk-[a-zA-Z0-9]{4})[a-zA-Z0-9]*(.{6})$/, "$1***$2");
+            row.appendChild(apiKeyCell);
+
+            if (data[0] === null) {
+              // ERROR MESSAGE
+              let errorMessageCell = document.createElement("td");
+              errorMessageCell.colSpan = "3";
+              errorMessageCell.classList.add("status-error");
+              errorMessageCell.textContent = "不正确或已失效的API-KEY";
+              row.appendChild(errorMessageCell);
+            } else {
+              // TOTAL GRANTED
+              let totalGrantedCell = document.createElement("td");
+              totalGrantedCell.textContent = data[0].toFixed(2);
+              row.appendChild(totalGrantedCell);
+
+              // TOTAL USED
+              let totalUsedCell = document.createElement("td");
+              totalUsedCell.textContent = data[1].toFixed(2);
+              row.appendChild(totalUsedCell);
+
+              // TOTAL AVAILABLE
+              let totalAvailableCell = document.createElement("td");
+              totalAvailableCell.textContent = data[2].toFixed(2);
+              row.appendChild(totalAvailableCell);
+            }
+
+            tableBody.appendChild(row);
+
+            // 添加以下代码，查询完成后删除已查询的API-KEY
+            if (i === apiKeys.length - 1) {
+              queriedApiKeys = [];
+            }
+            h2.style.display = 'block';
+            table.style.display = 'table';
+
+          }).catch((error) => {
+            console.error(error);
+            // update table with error message
+            let row = document.createElement("tr");
+            let apiKeyCell = document.createElement("td");
+            apiKeyCell.textContent = apiKey;
+            row.appendChild(apiKeyCell);
+
+            let errorMessageCell = document.createElement("td");
+            errorMessageCell.colSpan = "3";
+            errorMessageCell.style.width = "90px";
+            errorMessageCell.classList.add("status-error");
+            errorMessageCell.textContent =
+              "账户疑似被封禁，请登录 OpenAI 官网确认";
+            row.appendChild(errorMessageCell);
+
+            tableBody.appendChild(row);
+
+            // 添加以下代码，查询完成后删除已查询的API-KEY
+            if (i === apiKeys.length - 1) {
+              queriedApiKeys = [];
+            }
+          });
+        }
+      }
+
+
+      let apiUrlSelect = document.getElementById("api-url-select");
+      let customUrlInput = document.getElementById("custom-url-input");
+
+      apiUrlSelect.addEventListener("change", function () {
+        if (apiUrlSelect.value === "custom") {
+          customUrlInput.style.display = "inline-block";
+          customUrlInput.style.marginTop = "5px";
+        } else {
+          customUrlInput.style.display = "none";
+        }
+      });
+      const ip = {
+        ipinfo: '',
+        getipinfo() {
+          fetch('https://forge.speedtest.cn/api/location/info')
+            .then(res => res.json())
+            .then(res => {
+              // console.log(res);
+              this.ipinfo = `当前IP: ${res.ip} (${res.province} ${res.city}  ${res.distinct} ${res.isp})  `
+
+            })
+            .catch(err => {
+              console.log(err);
+            })
+        }
+      }
+    </script>
+</body>
+
+</html>
