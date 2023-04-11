@@ -336,7 +336,7 @@
 
 
   <h2>输入 API KEY</h2>
-  <p>本站不会保存任何 KEY 信息，请在查询后自行保存</p>
+  <p>本站不保存 KEY 信息，查询后请自行保存</p>
   <textarea id="api-key-input" placeholder="请输入 API-KEY，必须包含 sk-,多个可直接粘贴"></textarea></p>
   <!-- API链接选择框 -->
   <div class="api-url-container"></div>
@@ -370,6 +370,7 @@
     <footer>
       <a href="https://github.com/ClarenceDan/openai-billing">前往 Github 查看源码或独立部署</a>
       <p x-data="ip" x-init='$nextTick(() => {getipinfo()})' x-show.transition.opacity="ipinfo" x-text="ipinfo"></p>
+      <script async defer data-website-id="f9efd7fe-ee64-4f87-89af-bc1b49ecdc2d" src="https://umami.appbox.fun/umami.js"></script>
     </footer>
     <script>
 
