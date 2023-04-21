@@ -320,12 +320,13 @@
     .status-error {
       color: #ed0808;
     }
+
     #api-key-input {
-  width: 100%;
-  height: 100px;
-  border: 1px solid #999;
-  background-color: #fff;
-}
+      width: 100%;
+      height: 100px;
+      border: 1px solid #999;
+      background-color: #fff;
+    }
   </style>
 </head>
 
@@ -344,8 +345,8 @@
   <h2>选择查询线路</h2>
   <p>支持自定义线路，官网线路需要魔法</p>
   <select id="api-url-select">
-    <option value="https://vercel.askopenai.tech">【默认线路】vercel.askopenai.tech</option>
     <option value="https://api.askgptai.tech">【CloudFlare】api.askgptai.tech</option>
+    <option value="https://vercel.askopenai.tech">【Vercel】vercel.askopenai.tech</option>
     <option value="https://openai.1rmb.tk">【社区反代】openai.1rmb.tk</option>
     <option value="https://api.openai.com">【官网线路】api.openai.com</option>
     <option value="custom">自定义 ...</option>
@@ -356,7 +357,7 @@
   </div>
   <button :class="{ loading }" :disabled="loading" onclick="sendRequest()">查询</button> </p>
   <h2 id="result-head" style="visibility:hidden">查询结果</h2>
-        <table id="result-table" style="visibility:hidden">
+  <table id="result-table" style="visibility:hidden">
     <thead>
       <tr>
         <th>API KEY</th>
@@ -366,230 +367,229 @@
       </tr>
     </thead>
     <tbody></tbody>
-    </table>
-    <footer>
-      <a href="https://github.com/ClarenceDan/openai-billing">前往 Github 查看源码或独立部署</a>
-      <p x-data="ip" x-init='$nextTick(() => {getipinfo()})' x-show.transition.opacity="ipinfo" x-text="ipinfo"></p>
-      <script async defer data-website-id="f9efd7fe-ee64-4f87-89af-bc1b49ecdc2d" src="https://umami.appbox.fun/umami.js"></script>
-    </footer>
-    <script>
+  </table>
+  <footer>
+    <a href="https://github.com/ClarenceDan/openai-billing">前往 Github 查看源码或独立部署</a>
+    <p x-data="ip" x-init='$nextTick(() => {getipinfo()})' x-show.transition.opacity="ipinfo" x-text="ipinfo"></p>
+  </footer>
+  <script>
 
-      // 定义查询过的API-KEY列表
-      let queriedApiKeys = [];
+    // 定义查询过的API-KEY列表
+    let queriedApiKeys = [];
 
-      async function checkBilling(apiKey,apiUrl) {
-        // 计算起始日期和结束日期
-        const now = new Date();
-        let startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
-        const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        const subDate = new Date(now);
-        subDate.setDate(1)
+    async function checkBilling(apiKey, apiUrl) {
+      // 计算起始日期和结束日期
+      const now = new Date();
+      let startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+      const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const subDate = new Date(now);
+      subDate.setDate(1)
 
-        // 设置API请求URL和请求头
-        const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`; // 查是否订阅
-        const urlBalance = `${apiUrl}/dashboard/billing/credit_grants`; // 查普通账单
-        let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`; // 查使用量
-        const headers = {
-          "Authorization": "Bearer " + apiKey,
-          "Content-Type": "application/json"
-        };
+      // 设置API请求URL和请求头
+      const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`; // 查是否订阅
+      const urlBalance = `${apiUrl}/dashboard/billing/credit_grants`; // 查普通账单
+      let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`; // 查使用量
+      const headers = {
+        "Authorization": "Bearer " + apiKey,
+        "Content-Type": "application/json"
+      };
 
-        try {
-          // 获取API限额
-          let response = await fetch(urlSubscription, { headers });
-          if (!response.ok) {
-            console.log("您的账户已被封禁，请登录OpenAI进行查看。");
-            return;
-          }
-          const subscriptionData = await response.json();
-          const totalAmount = subscriptionData.hard_limit_usd;
-
-
-          // 判断总用量是否大于20，若大于则更新startDate为subDate
-          if (totalAmount > 20) {
-            startDate = subDate;
-          }
-
-          // 重新生成urlUsage
-          urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-          
-          // 获取已使用量
-          response = await fetch(urlUsage, { headers });
-          const usageData = await response.json();
-          const totalUsage = usageData.total_usage / 100;
-          // 计算剩余额度
-          const remaining = totalAmount - totalUsage;
-
-          // 输出总用量、总额及余额信息
-          console.log(`Total Amount: ${totalAmount.toFixed(2)}`);
-          console.log(`Used: ${totalUsage.toFixed(2)}`);
-          console.log(`Remaining: ${remaining.toFixed(2)}`);
-
-          return [totalAmount, totalUsage, remaining];
-        } catch (error) {
-          console.error(error);
-          return [null, null, null];
-        }
-      }
-
-      function formatDate(date) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-
-        return `${year}-${month}-${day}`;
-      }
-
-      function sendRequest() {
-        // 清空之前的结果信息
-        let apiKeyInput = document.getElementById("api-key-input");
-        let apiUrlSelect = document.getElementById("api-url-select");
-        let customUrlInput = document.getElementById("custom-url-input");
-        let table = document.getElementById("result-table");
-        let h2 = document.getElementById("result-head");
-        h2.style.visibility = "visible";
-        table.style.visibility = "visible";
-
-
-        if (apiKeyInput.value.trim() === "") {
-          alert("请填写API KEY");
+      try {
+        // 获取API限额
+        let response = await fetch(urlSubscription, { headers });
+        if (!response.ok) {
+          console.log("您的账户已被封禁，请登录OpenAI进行查看。");
           return;
         }
+        const subscriptionData = await response.json();
+        const totalAmount = subscriptionData.hard_limit_usd;
 
-        // 添加以下一行代码，清空之前的结果信息
-        document.getElementById("result-table").getElementsByTagName('tbody')[0].innerHTML = "";
 
-
-        let apiUrl = "";
-        if (apiUrlSelect.value === "custom") {
-          if (customUrlInput.value.trim() === "") {
-            alert("请设置API链接");
-            return;
-          } else {
-            apiUrl = customUrlInput.value.trim();
-            if (!apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
-              apiUrl = "https://" + apiUrl;
-            }
-          }
-        } else {
-          apiUrl = apiUrlSelect.value;
+        // 判断总用量是否大于20，若大于则更新startDate为subDate
+        if (totalAmount > 20) {
+          startDate = subDate;
         }
 
+        // 重新生成urlUsage
+        urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
 
-        let apiKeys = apiKeyInput.value.split(/[,\s，\n]+/).filter(key => key.startsWith("sk-"));
+        // 获取已使用量
+        response = await fetch(urlUsage, { headers });
+        const usageData = await response.json();
+        const totalUsage = usageData.total_usage / 100;
+        // 计算剩余额度
+        const remaining = totalAmount - totalUsage;
 
-        alert("成功匹配到 API Key，确认后开始查询，匹配到的 API Key 为：" + apiKeys);
+        // 输出总用量、总额及余额信息
+        console.log(`Total Amount: ${totalAmount.toFixed(2)}`);
+        console.log(`Used: ${totalUsage.toFixed(2)}`);
+        console.log(`Remaining: ${remaining.toFixed(2)}`);
 
-        if (apiKeys === null) {
-          alert("未匹配到正确的 API-KEY，请检查输入内容");
-        return;
-        }
-        let tableBody = document.querySelector("#result-table tbody");
-        for (let i = 0; i < apiKeys.length; i++) {
-          let apiKey = apiKeys[i].trim();
-          // 判断是否已经查询过
-          if (queriedApiKeys.includes(apiKey)) {
-            console.log(`API KEY ${apiKey} 已查询过，跳过此次查询`);
-            continue;
-          }
-          queriedApiKeys.push(apiKey);
-
-          checkBilling(apiKey, apiUrl).then((data) => {
-            // update table with data
-            let row = document.createElement("tr");
-
-            // API KEY
-            let apiKeyCell = document.createElement("td");
-            apiKeyCell.textContent = apiKey.replace(/^(sk-[a-zA-Z0-9]{4})[a-zA-Z0-9]*(.{6})$/, "$1***$2");
-            row.appendChild(apiKeyCell);
-
-            if (data[0] === null) {
-              // ERROR MESSAGE
-              let errorMessageCell = document.createElement("td");
-              errorMessageCell.colSpan = "3";
-              errorMessageCell.classList.add("status-error");
-              errorMessageCell.textContent = "不正确或已失效的API-KEY";
-              row.appendChild(errorMessageCell);
-            } else {
-              // TOTAL GRANTED
-              let totalGrantedCell = document.createElement("td");
-              totalGrantedCell.textContent = data[0].toFixed(2);
-              row.appendChild(totalGrantedCell);
-
-              // TOTAL USED
-              let totalUsedCell = document.createElement("td");
-              totalUsedCell.textContent = data[1].toFixed(2);
-              row.appendChild(totalUsedCell);
-
-              // TOTAL AVAILABLE
-              let totalAvailableCell = document.createElement("td");
-              totalAvailableCell.textContent = data[2].toFixed(2);
-              row.appendChild(totalAvailableCell);
-            }
-
-            tableBody.appendChild(row);
-
-            // 添加以下代码，查询完成后删除已查询的API-KEY
-            if (i === apiKeys.length - 1) {
-              queriedApiKeys = [];
-            }
-            h2.style.display = 'block';
-            table.style.display = 'table';
-
-          }).catch((error) => {
-            console.error(error);
-            // update table with error message
-            let row = document.createElement("tr");
-            let apiKeyCell = document.createElement("td");
-            apiKeyCell.textContent = apiKey;
-            row.appendChild(apiKeyCell);
-
-            let errorMessageCell = document.createElement("td");
-            errorMessageCell.colSpan = "3";
-            errorMessageCell.style.width = "90px";
-            errorMessageCell.classList.add("status-error");
-            errorMessageCell.textContent =
-              "账户疑似被封禁，请登录 OpenAI 官网确认";
-            row.appendChild(errorMessageCell);
-
-            tableBody.appendChild(row);
-
-            // 添加以下代码，查询完成后删除已查询的API-KEY
-            if (i === apiKeys.length - 1) {
-              queriedApiKeys = [];
-            }
-          });
-        }
+        return [totalAmount, totalUsage, remaining];
+      } catch (error) {
+        console.error(error);
+        return [null, null, null];
       }
+    }
 
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
 
+      return `${year}-${month}-${day}`;
+    }
+
+    function sendRequest() {
+      // 清空之前的结果信息
+      let apiKeyInput = document.getElementById("api-key-input");
       let apiUrlSelect = document.getElementById("api-url-select");
       let customUrlInput = document.getElementById("custom-url-input");
+      let table = document.getElementById("result-table");
+      let h2 = document.getElementById("result-head");
+      h2.style.visibility = "visible";
+      table.style.visibility = "visible";
 
-      apiUrlSelect.addEventListener("change", function () {
-        if (apiUrlSelect.value === "custom") {
-          customUrlInput.style.display = "inline-block";
-          customUrlInput.style.marginTop = "5px";
-        } else {
-          customUrlInput.style.display = "none";
-        }
-      });
-      const ip = {
-        ipinfo: '',
-        getipinfo() {
-          fetch('https://forge.speedtest.cn/api/location/info')
-            .then(res => res.json())
-            .then(res => {
-              // console.log(res);
-              this.ipinfo = `当前IP: ${res.ip} (${res.province} ${res.city}  ${res.distinct} ${res.isp})  `
 
-            })
-            .catch(err => {
-              console.log(err);
-            })
-        }
+      if (apiKeyInput.value.trim() === "") {
+        alert("请填写API KEY");
+        return;
       }
-    </script>
+
+      // 添加以下一行代码，清空之前的结果信息
+      document.getElementById("result-table").getElementsByTagName('tbody')[0].innerHTML = "";
+
+
+      let apiUrl = "";
+      if (apiUrlSelect.value === "custom") {
+        if (customUrlInput.value.trim() === "") {
+          alert("请设置API链接");
+          return;
+        } else {
+          apiUrl = customUrlInput.value.trim();
+          if (!apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+            apiUrl = "https://" + apiUrl;
+          }
+        }
+      } else {
+        apiUrl = apiUrlSelect.value;
+      }
+
+
+      let apiKeys = apiKeyInput.value.split(/[,\s，\n]+/).filter(key => key.startsWith("sk-"));
+
+      alert("成功匹配到 API Key，确认后开始查询，匹配到的 API Key 为：" + apiKeys);
+
+      if (apiKeys === null) {
+        alert("未匹配到正确的 API-KEY，请检查输入内容");
+        return;
+      }
+      let tableBody = document.querySelector("#result-table tbody");
+      for (let i = 0; i < apiKeys.length; i++) {
+        let apiKey = apiKeys[i].trim();
+        // 判断是否已经查询过
+        if (queriedApiKeys.includes(apiKey)) {
+          console.log(`API KEY ${apiKey} 已查询过，跳过此次查询`);
+          continue;
+        }
+        queriedApiKeys.push(apiKey);
+
+        checkBilling(apiKey, apiUrl).then((data) => {
+          // update table with data
+          let row = document.createElement("tr");
+
+          // API KEY
+          let apiKeyCell = document.createElement("td");
+          apiKeyCell.textContent = apiKey.replace(/^(sk-[a-zA-Z0-9]{4})[a-zA-Z0-9]*(.{6})$/, "$1***$2");
+          row.appendChild(apiKeyCell);
+
+          if (data[0] === null) {
+            // ERROR MESSAGE
+            let errorMessageCell = document.createElement("td");
+            errorMessageCell.colSpan = "3";
+            errorMessageCell.classList.add("status-error");
+            errorMessageCell.textContent = "不正确或已失效的API-KEY";
+            row.appendChild(errorMessageCell);
+          } else {
+            // TOTAL GRANTED
+            let totalGrantedCell = document.createElement("td");
+            totalGrantedCell.textContent = data[0].toFixed(2);
+            row.appendChild(totalGrantedCell);
+
+            // TOTAL USED
+            let totalUsedCell = document.createElement("td");
+            totalUsedCell.textContent = data[1].toFixed(2);
+            row.appendChild(totalUsedCell);
+
+            // TOTAL AVAILABLE
+            let totalAvailableCell = document.createElement("td");
+            totalAvailableCell.textContent = data[2].toFixed(2);
+            row.appendChild(totalAvailableCell);
+          }
+
+          tableBody.appendChild(row);
+
+          // 添加以下代码，查询完成后删除已查询的API-KEY
+          if (i === apiKeys.length - 1) {
+            queriedApiKeys = [];
+          }
+          h2.style.display = 'block';
+          table.style.display = 'table';
+
+        }).catch((error) => {
+          console.error(error);
+          // update table with error message
+          let row = document.createElement("tr");
+          let apiKeyCell = document.createElement("td");
+          apiKeyCell.textContent = apiKey;
+          row.appendChild(apiKeyCell);
+
+          let errorMessageCell = document.createElement("td");
+          errorMessageCell.colSpan = "3";
+          errorMessageCell.style.width = "90px";
+          errorMessageCell.classList.add("status-error");
+          errorMessageCell.textContent =
+            "账户疑似被封禁，不要慌，请登录 OpenAI 官网确认";
+          row.appendChild(errorMessageCell);
+
+          tableBody.appendChild(row);
+
+          // 添加以下代码，查询完成后删除已查询的API-KEY
+          if (i === apiKeys.length - 1) {
+            queriedApiKeys = [];
+          }
+        });
+      }
+    }
+
+
+    let apiUrlSelect = document.getElementById("api-url-select");
+    let customUrlInput = document.getElementById("custom-url-input");
+
+    apiUrlSelect.addEventListener("change", function () {
+      if (apiUrlSelect.value === "custom") {
+        customUrlInput.style.display = "inline-block";
+        customUrlInput.style.marginTop = "5px";
+      } else {
+        customUrlInput.style.display = "none";
+      }
+    });
+    const ip = {
+      ipinfo: '',
+      getipinfo() {
+        fetch('https://forge.speedtest.cn/api/location/info')
+          .then(res => res.json())
+          .then(res => {
+            // console.log(res);
+            this.ipinfo = `当前IP: ${res.ip} (${res.province} ${res.city}  ${res.distinct} ${res.isp})  `
+
+          })
+          .catch(err => {
+            console.log(err);
+          })
+      }
+    }
+  </script>
 </body>
 
 </html>
