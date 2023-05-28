@@ -402,11 +402,11 @@
           return;
         }
         const subscriptionData = await response.json();
-        const totalAmount = subscriptionData.hard_limit_usd;
+        const has_payment_method = subscriptionData.has_payment_method; // 是否存在支付方式
 
 
-        // 判断总用量是否大于20，若大于则更新startDate为subDate
-        if (totalAmount > 20) {
+        // 判断是否是每月重置额度：通过是否存在支付方式判断，绑卡后每月额度会刷新，因此更新startDate为subDate
+        if (has_payment_method) {
           startDate = subDate;
         }
 
