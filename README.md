@@ -10,6 +10,19 @@ This project provides a quick and easy way to check OpenAI API Key balances, sup
 5. 包含独立部署反代代码，使用更放心。
 6. 单个 html 代码，体积 18KB 极速加载
 
+查询结果样例如下：
+
+| API KEY                                    | 总限额   | 已使用 | 剩余量  | 到期时间    | GPT-4 | 是否绑卡 |
+| ----------------------------------------- | ------- | ------ | ------- | ----------- | ----- | -------- |
+| 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 | 账户疑似被封禁，请登录 OpenAI 官网确认| | | | ❌    | 🔴      |
+| sk-92I2***lVEv0i                          | 5.00    | 0.00   | 5.00    | 2023-09-01 | ❌    | 🟢      |
+| sk-6f9R***iHouYS                          | 5000.00 | 144.10 | 4855.90 | 2023-07-01 | ❌    | 🟢      |
+| sk-jA6g***3lDJem                          | 18.00   | 0.00   | 🔴过期 | 2023-06-01 | ❌    | 🔴      |
+
+示例图片:
+![示例图片](./sample.png)
+
+
 ## 如何使用？
 
 直接使用：https://aivesa.com/checkbilling
@@ -19,6 +32,7 @@ This project provides a quick and easy way to check OpenAI API Key balances, sup
 1. 下载 checkbilling.html
 2. 本地用浏览器打开，或者上传到服务器打开
 3. 网页 footer 添加了指向该项目的超链接，不喜欢可以删掉
+4. 网页 footer 添加了umami 访问量统计代码，不喜欢可以去掉
 
 ## 反向代理搭建：
 
