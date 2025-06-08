@@ -45,7 +45,3 @@ This project provides a quick and easy way to check OpenAI API Key balances, sup
 2. JS代码参考了 @herobrine19 大佬的项目：https://github.com/herobrine19/openai-billing
 3. 最后感谢 GPT-4 的辛勤劳动，期间多次用到 PLUS 的 3小时 25 次上限。
 
-
-##Sponsor
-
-[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
